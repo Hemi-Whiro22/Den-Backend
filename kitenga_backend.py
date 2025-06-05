@@ -16,6 +16,8 @@ app.add_middleware(
 )
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "the-den-faa84-39e2d1939316.json"
 openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.organization = os.getenv("OPENAI_ORG_ID")
+
 
 scribe_entries = []  # 🔥 Patch: prevent NameError in /scribe route
 
