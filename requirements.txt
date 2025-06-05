@@ -1,6 +1,5 @@
 fastapi
 uvicorn
-openai
 google-cloud-vision
 python-multipart
 pydantic
