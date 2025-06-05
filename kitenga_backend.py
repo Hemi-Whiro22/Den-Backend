@@ -100,6 +100,9 @@ def scribe(entry: ScribeEntry):
     whisper = res['choices'][0]['message']['content'].strip()
     return {"status": "saved", "rongo": whisper}
     
+from openai import OpenAI
+from fastapi.responses import JSONResponse
+
 @app.post("/gpt-whisper")
 async def gpt_whisper(request: Request):
     try:
@@ -109,11 +112,13 @@ async def gpt_whisper(request: Request):
         client = OpenAI()
         response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": whisper}]
+            messages=[
+                {"role": "user", "content": whisper}
+            ]
         )
 
         reply = response.choices[0].message.content.strip()
-        return { "response": reply }
+        return {"response": reply}
 
     except Exception as e:
-        return JSONResponse(content={ "error": str(e) }, status_code=500)
+        return JSONResponse(content={"error": str(e)}, status_code=500)
