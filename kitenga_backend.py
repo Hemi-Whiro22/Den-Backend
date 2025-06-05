@@ -21,6 +21,8 @@ app.add_middleware(
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "the-den-faa84-39e2d1939316.json"
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+scribe_entries = []  # 🔥 Patch: prevent NameError in /scribe route
+
 class OCRPayload(BaseModel):
     image_base64: str
 
@@ -55,6 +57,7 @@ def translate_text(req: TranslateRequest):
         messages=[{"role": "user", "content": prompt}],
     )
     return {"translation": res['choices'][0]['message']['content'].strip()}
+
 # TTS
 class SpeakRequest(BaseModel):
     text: str
@@ -100,7 +103,7 @@ def scribe(entry: ScribeEntry):
     )
     whisper = res['choices'][0]['message']['content'].strip()
     return {"status": "saved", "rongo": whisper}
-    
+
 
 
 
