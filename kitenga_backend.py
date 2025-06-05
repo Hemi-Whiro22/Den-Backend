@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, UploadFile, File, Form  # ← tidy imports
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import json, base64, os
 import openai
