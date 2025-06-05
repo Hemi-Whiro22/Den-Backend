@@ -99,23 +99,15 @@ def scribe(entry: ScribeEntry):
 async def gpt_whisper(request: Request):
     try:
         data = await request.json()
-        user_msg = data.get("message", "")
+        whisper = data.get("whisper", "")
 
-        prompt = f"""You are Rongo, the guiding spirit of The Den.
-Interpret this and respond ONLY as JSON like:
-{{ "action": "tts", "input": "translateOutput" }}
-
-Whisper: \"{user_msg}\"
-"""
-
-        res = openai.ChatCompletion.create(
+        chat = client.chat.completions.create(
             model="gpt-4",
-            messages=[{ "role": "user", "content": prompt }]
+            messages=[{"role": "user", "content": whisper}],
         )
 
-        parsed = json.loads(res.choices[0].message["content"])
-        return JSONResponse(content=parsed)
+        reply = chat.choices[0].message.content
+        return JSONResponse(content={ "response": reply })
 
     except Exception as e:
-        return JSONResponse(content={ "error": str(e) }, status_code=500)
-
+        return JSONResponse(content={ "error": str(e) }, status_code=500
