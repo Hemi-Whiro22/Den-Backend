@@ -2,13 +2,9 @@ from fastapi import FastAPI, Request, UploadFile, File, Form  # ← tidy imports
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import openai  
-import json, base64, os
 import openai
+import json, base64, os
 import requests
-
-
-
 
 app = FastAPI()
 app.add_middleware(
@@ -50,13 +46,12 @@ class TranslateRequest(BaseModel):
 
 @app.post("/translate")
 def translate_text(req: TranslateRequest):
-    openai.api_key = os.getenv("OPENAI_API_KEY")
     prompt = f"Translate to {req.target_lang}:\n{req.text}"
-    res = openai.ChatCompletion.create(
+    res = openai.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
     )
-    return {"translation": res['choices'][0]['message']['content'].strip()}
+    return {"translation": res.choices[0].message.content.strip()}
 
 # TTS
 class SpeakRequest(BaseModel):
@@ -89,23 +84,17 @@ class ScribeEntry(BaseModel):
 
 @app.post("/scribe")
 def scribe(entry: ScribeEntry):
-    openai.api_key = os.getenv("OPENAI_API_KEY")
     scribe_entries.append(entry.dict())
     with open("backend/scribe_entries.json", "w") as f:
         json.dump(scribe_entries, f, indent=2)
     # Rongo Whisper
     rongo_prompt = f"What does this mean: {entry.text}"   # <<<< FIXED LINE
-    # If you want multi-line, use triple quotes:
-    # rongo_prompt = f"""What does this mean:\n{entry.text}\n"""
-    res = openai.ChatCompletion.create(
+    res = openai.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": rongo_prompt}]
     )
-    whisper = res['choices'][0]['message']['content'].strip()
+    whisper = res.choices[0].message.content.strip()
     return {"status": "saved", "rongo": whisper}
-
-
-
 
 @app.post("/gpt-whisper")
 async def gpt_whisper(request: Request):
@@ -113,13 +102,13 @@ async def gpt_whisper(request: Request):
         data = await request.json()
         whisper = data.get("whisper", "")
 
-        res = openai.ChatCompletion.create(
+        res = openai.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "user", "content": whisper}
             ]
         )
-        reply = res['choices'][0]['message']['content'].strip()
+        reply = res.choices[0].message.content.strip()
         return { "response": reply }
 
     except Exception as e:
