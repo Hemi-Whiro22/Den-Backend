@@ -14,7 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-wos.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "the-den-faa84-39e2d1939316.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "the-den-faa84-39e2d1939316.json"
 
 class OCRPayload(BaseModel):
     image_base64: str
