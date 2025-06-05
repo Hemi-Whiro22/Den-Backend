@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, UploadFile, File, Form  # ← tidy imports
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from openai import OpenAI
+import openai  
 import json, base64, os
 import openai
 import requests
@@ -100,8 +100,7 @@ def scribe(entry: ScribeEntry):
     whisper = res['choices'][0]['message']['content'].strip()
     return {"status": "saved", "rongo": whisper}
     
-from openai import OpenAI
-from fastapi.responses import JSONResponse
+
 
 @app.post("/gpt-whisper")
 async def gpt_whisper(request: Request):
@@ -109,12 +108,9 @@ async def gpt_whisper(request: Request):
         data = await request.json()
         whisper = data.get("whisper", "")
 
-        client = OpenAI()
-        response = client.chat.completions.create(
+        response = openai.chat.completions.create(
             model="gpt-4",
-            messages=[
-                {"role": "user", "content": whisper}
-            ]
+            messages=[{"role": "user", "content": whisper}]
         )
 
         reply = response.choices[0].message.content.strip()
