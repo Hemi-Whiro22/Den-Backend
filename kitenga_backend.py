@@ -1,85 +1,98 @@
-from fastapi import FastAPI, Request
+# FastAPI with OCR, Translate, TTS, and Rongo GPT
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import uuid
-import json
-import os
+import json, base64, os
+import openai
+import requests
 
 app = FastAPI()
-
-# CORS so frontend can talk to us
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
-# === 📜 RONGOHIA: SCRIBE ENTRY ===
-class ScribeEntry(BaseModel):
-    speaker: str
-    text: str
-    tone: str
-    glyph_id: str
-    translate: bool = False
+wos.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "the-den-faa84-39e2d1939316.json"
 
-@app.post("/scribe")
-async def scribe(entry: ScribeEntry):
-    entry_id = str(uuid.uuid4())
-    entry_dict = entry.dict()
-    entry_dict["entry_id"] = entry_id
-
-    try:
-        filepath = "scribe_entries.json"
-        if os.path.exists(filepath):
-            with open(filepath, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        else:
-            data = []
-
-        data.append(entry_dict)
-
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-
-        return {
-            "status": "success",
-            "message": "Entry saved",
-            "entry_id": entry_id
-        }
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-# === 👁️ KITENGA: OCR ===
 class OCRPayload(BaseModel):
     image_base64: str
 
 @app.post("/ocr")
 async def ocr(payload: OCRPayload):
+    client = vision.ImageAnnotatorClient()
+    image_data = base64.b64decode(payload.image_base64)
+    image = vision.Image(content=image_data)
+    response = client.text_detection(image=image)
+    texts = response.text_annotations
+
+    if not texts:
+        return { "status": "success", "extracted_text": "No text found." }
+
     return {
         "status": "success",
-        "extracted_text": "Tēnei te kōrero i kitea i te whakapakoko."
+        "extracted_text": texts[0].description
     }
 
-# === 🌐 TĀWERA: TRANSLATE ===
-class TranslatePayload(BaseModel):
+
+# Translate
+class TranslateRequest(BaseModel):
     text: str
-    target_language: str
+    target_lang: str = "en"
 
 @app.post("/translate")
-async def translate(payload: TranslatePayload):
-    if payload.target_language == "en":
-        return {"translated_text": "This is the text found in the image."}
-    elif payload.target_language == "mi":
-        return {"translated_text": "Tēnei te kōrero i kitea i te whakapakoko."}
-    else:
-        return {"translated_text": "Unsupported language."}
+def translate_text(req: TranslateRequest):
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    prompt = f"Translate to {req.target_lang}:
+{req.text}"
+    res = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return {"translation": res['choices'][0]['message']['content'].strip()}
 
-# === 🔊 WAIRUA: TTS ===
-class TTSPayload(BaseModel):
+# TTS
+class SpeakRequest(BaseModel):
     text: str
-    voice: str = "default"
 
 @app.post("/speak")
-async def speak(payload: TTSPayload):
-    return {"audio_url": f"/fake/path/to/audio/{uuid.uuid4()}.mp3"}
+def speak_text(req: SpeakRequest):
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    headers = {
+        "xi-api-key": api_key,
+        "Content-Type": "application/json"
+    }
+    body = {
+        "text": req.text,
+        "voice_settings": {"stability": 0.5, "similarity_boost": 0.5}
+    }
+    url = "https://api.elevenlabs.io/v1/text-to-speech/TxGEqnHWrfWFTfGW9XjX"
+    response = requests.post(url, headers=headers, json=body)
+    with open("backend/speak.mp3", "wb") as f:
+        f.write(response.content)
+    return {"audio_url": "/static/speak.mp3"}
+
+# Scribe Log
+class ScribeEntry(BaseModel):
+    speaker: str
+    text: str
+    tone: str = "neutral"
+    glyph_id: str = "glyph-auto"
+    translate: bool = False
+
+@app.post("/scribe")
+def scribe(entry: ScribeEntry):
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    scribe_entries.append(entry.dict())
+    with open("backend/scribe_entries.json", "w") as f:
+        json.dump(scribe_entries, f, indent=2)
+    # Rongo Whisper
+    rongo_prompt = f"What does this mean:
+{entry.text}"
+    res = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": rongo_prompt}]
+    )
+    whisper = res['choices'][0]['message']['content'].strip()
+    return {"status": "saved", "rongo": whisper}
