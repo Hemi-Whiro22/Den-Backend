@@ -1,4 +1,7 @@
 fastapi
 uvicorn
 openai
-python-dotenv
+google-cloud-vision
+python-multipart
+pydantic
+elevenlabs
