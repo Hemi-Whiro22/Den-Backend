@@ -86,8 +86,9 @@ def scribe(entry: ScribeEntry):
     with open("backend/scribe_entries.json", "w") as f:
         json.dump(scribe_entries, f, indent=2)
     # Rongo Whisper
-    rongo_prompt = f"What does this mean:
-{entry.text}"
+    rongo_prompt = f"What does this mean: {entry.text}"   # <<<< FIXED LINE
+    # If you want multi-line, use triple quotes:
+    # rongo_prompt = f"""What does this mean:\n{entry.text}\n"""
     res = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": rongo_prompt}]
