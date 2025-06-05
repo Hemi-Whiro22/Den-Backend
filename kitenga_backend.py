@@ -45,13 +45,11 @@ class TranslateRequest(BaseModel):
 def translate_text(req: TranslateRequest):
     openai.api_key = os.getenv("OPENAI_API_KEY")
     prompt = f"Translate to {req.target_lang}:\n{req.text}"
-{req.text}"
     res = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
     )
     return {"translation": res['choices'][0]['message']['content'].strip()}
-
 # TTS
 class SpeakRequest(BaseModel):
     text: str
