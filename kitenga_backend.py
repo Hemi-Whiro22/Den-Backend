@@ -8,11 +8,11 @@ import requests
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Or lock to your frontend if you want
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "the-den-faa84-39e2d1939316.json"
 
 class OCRPayload(BaseModel):
