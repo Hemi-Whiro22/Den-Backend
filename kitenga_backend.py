@@ -19,6 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "the-den-faa84-39e2d1939316.json"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class OCRPayload(BaseModel):
     image_base64: str
@@ -102,19 +103,21 @@ def scribe(entry: ScribeEntry):
     
 
 
+
 @app.post("/gpt-whisper")
 async def gpt_whisper(request: Request):
     try:
         data = await request.json()
         whisper = data.get("whisper", "")
 
-        response = openai.chat.completions.create(
+        res = openai.ChatCompletion.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": whisper}]
+            messages=[
+                {"role": "user", "content": whisper}
+            ]
         )
-
-        reply = response.choices[0].message.content.strip()
-        return {"response": reply}
+        reply = res['choices'][0]['message']['content'].strip()
+        return { "response": reply }
 
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        return JSONResponse(content={ "error": str(e) }, status_code=500)
