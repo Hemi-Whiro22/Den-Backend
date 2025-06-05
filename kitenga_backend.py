@@ -2,9 +2,13 @@ from fastapi import FastAPI, Request, UploadFile, File, Form  # ← tidy imports
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from openai import OpenAI
 import json, base64, os
 import openai
 import requests
+
+
+
 
 app = FastAPI()
 app.add_middleware(
@@ -102,13 +106,14 @@ async def gpt_whisper(request: Request):
         data = await request.json()
         whisper = data.get("whisper", "")
 
-        chat = client.chat.completions.create(
+        client = OpenAI()
+        response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": whisper}],
+            messages=[{"role": "user", "content": whisper}]
         )
 
-        reply = chat.choices[0].message.content
-        return JSONResponse(content={ "response": reply })
+        reply = response.choices[0].message.content.strip()
+        return { "response": reply }
 
     except Exception as e:
         return JSONResponse(content={ "error": str(e) }, status_code=500)
