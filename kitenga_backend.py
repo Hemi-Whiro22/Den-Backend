@@ -95,7 +95,7 @@ def scribe(entry: ScribeEntry):
     )
     whisper = res['choices'][0]['message']['content'].strip()
     return {"status": "saved", "rongo": whisper}
-
+    
 @app.post("/gpt-whisper")
 async def gpt_whisper(request: Request):
     try:
@@ -111,4 +111,4 @@ async def gpt_whisper(request: Request):
         return JSONResponse(content={ "response": reply })
 
     except Exception as e:
-        return JSONResponse(content={ "error": str(e) }, status_code=500
+        return JSONResponse(content={ "error": str(e) }, status_code=500)
