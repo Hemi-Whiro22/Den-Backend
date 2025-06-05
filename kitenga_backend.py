@@ -44,7 +44,7 @@ class TranslateRequest(BaseModel):
 @app.post("/translate")
 def translate_text(req: TranslateRequest):
     openai.api_key = os.getenv("OPENAI_API_KEY")
-    prompt = f"Translate to {req.target_lang}:
+    prompt = f"Translate to {req.target_lang}:\n{req.text}"
 {req.text}"
     res = openai.ChatCompletion.create(
         model="gpt-4",
